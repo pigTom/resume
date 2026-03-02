@@ -1,0 +1,53 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* 仅打印时隐藏 UI，显示简历 */
+.print-only {
+  display: none !important;
+}
+
+@media print {
+  /* 强制打印背景色与渐变，否则彩色侧栏会变白 */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  /* A4 页面，无边距 */
+  @page {
+    size: A4;
+    margin: 0;
+  }
+
+  body {
+    margin: 0;
+    padding: 0;
+  }
+
+  /*
+   * 浏览器 CSS px（96dpi）与 PDF 点（72dpi）换算：1pt = 1.3333px
+   * A4 = 210mm = 793.7px（CSS）= 595pt（PDF）
+   * 简历组件设计宽度 = 595px（CSS）
+   * 缩放因子 = 793.7 / 595 ≈ 1.3333，使简历恰好占满 A4
+   */
+  .print-only {
+    display: block !important;
+    position: fixed;
+    top: 0;
+    left: 0;
+    transform-origin: top left;
+    transform: scale(1.3333);
+    z-index: 9999;
+    overflow: hidden;
+  }
+}
