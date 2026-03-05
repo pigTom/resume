@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import {
   ChevronDown, ChevronRight, Palette, User, Target,
   FileText, Code2, Briefcase, FolderOpen, GraduationCap,
@@ -91,6 +91,81 @@ function AddBtn({ onClick, label }) {
       <Plus size={12} />
       {label}
     </button>
+  )
+}
+
+/** 可拖拽排序的 Bullet 列表 */
+function DraggableBulletList({ bullets, onReorder, onUpdate, onRemove, onAdd, addLabel, dotColor = 'bg-blue-400' }) {
+  const dragIdx = useRef(null)
+  const dragOverIdx = useRef(null)
+  const [dragging, setDragging] = useState(null)
+
+  const handleDragStart = (idx) => {
+    dragIdx.current = idx
+    setDragging(idx)
+  }
+
+  const handleDragOver = (e, idx) => {
+    e.preventDefault()
+    dragOverIdx.current = idx
+  }
+
+  const handleDragEnd = () => {
+    const from = dragIdx.current
+    const to = dragOverIdx.current
+    if (from !== null && to !== null && from !== to) {
+      const updated = [...bullets]
+      const [item] = updated.splice(from, 1)
+      updated.splice(to, 0, item)
+      onReorder(updated)
+    }
+    dragIdx.current = null
+    dragOverIdx.current = null
+    setDragging(null)
+  }
+
+  return (
+    <div>
+      <div className="space-y-1.5">
+        {bullets.map((b, idx) => (
+          <div
+            key={idx}
+            draggable
+            onDragStart={() => handleDragStart(idx)}
+            onDragOver={(e) => handleDragOver(e, idx)}
+            onDragEnd={handleDragEnd}
+            className={`flex items-start gap-1 group/bullet rounded-lg transition-all
+                       ${dragging === idx ? 'opacity-40 scale-[0.98]' : ''}
+                       ${dragging !== null && dragging !== idx ? 'hover:bg-blue-50/50' : ''}`}
+          >
+            <div
+              className="mt-1.5 p-1 cursor-grab active:cursor-grabbing text-gray-300
+                         group-hover/bullet:text-gray-400 transition-colors flex-shrink-0"
+              title="拖拽排序"
+            >
+              <GripVertical size={14} />
+            </div>
+            <span className={`mt-2.5 w-1.5 h-1.5 rounded-full ${dotColor} flex-shrink-0`} />
+            <textarea
+              value={b}
+              onChange={e => onUpdate(idx, e.target.value)}
+              rows={2}
+              className="flex-1 px-2.5 py-1.5 text-sm border border-gray-200 rounded-lg
+                         focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-400
+                         bg-white resize-none"
+              placeholder="描述工作职责或量化成果"
+            />
+            <button
+              onClick={() => onRemove(idx)}
+              className="mt-1.5 p-1 text-gray-300 hover:text-red-400 hover:bg-red-50 rounded transition-colors"
+            >
+              <Trash2 size={13} />
+            </button>
+          </div>
+        ))}
+      </div>
+      <AddBtn onClick={onAdd} label={addLabel} />
+    </div>
   )
 }
 
@@ -362,29 +437,15 @@ function ExperienceItem({ job, onChange, onDelete }) {
       </div>
       <div>
         <label className="block text-xs font-medium text-gray-500 mb-1.5">工作要点</label>
-        <div className="space-y-1.5">
-          {job.bullets.map((b, idx) => (
-            <div key={idx} className="flex items-start gap-2">
-              <span className="mt-2.5 w-1.5 h-1.5 rounded-full bg-blue-400 flex-shrink-0" />
-              <textarea
-                value={b}
-                onChange={e => updateBullet(idx)(e.target.value)}
-                rows={2}
-                className="flex-1 px-2.5 py-1.5 text-sm border border-gray-200 rounded-lg
-                           focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-400
-                           bg-white resize-none"
-                placeholder="描述工作职责或量化成果"
-              />
-              <button
-                onClick={() => removeBullet(idx)}
-                className="mt-1.5 p-1 text-gray-300 hover:text-red-400 hover:bg-red-50 rounded transition-colors"
-              >
-                <Trash2 size={13} />
-              </button>
-            </div>
-          ))}
-        </div>
-        <AddBtn onClick={addBullet} label="添加要点" />
+        <DraggableBulletList
+          bullets={job.bullets}
+          onReorder={(newBullets) => onChange({ ...job, bullets: newBullets })}
+          onUpdate={(idx, val) => updateBullet(idx)(val)}
+          onRemove={removeBullet}
+          onAdd={addBullet}
+          addLabel="添加要点"
+          dotColor="bg-blue-400"
+        />
       </div>
     </div>
   )
@@ -458,29 +519,15 @@ function ProjectItem({ proj, onChange, onDelete }) {
       </div>
       <div>
         <label className="block text-xs font-medium text-gray-500 mb-1.5">项目亮点</label>
-        <div className="space-y-1.5">
-          {proj.bullets.map((b, idx) => (
-            <div key={idx} className="flex items-start gap-2">
-              <span className="mt-2.5 w-1.5 h-1.5 rounded-full bg-purple-400 flex-shrink-0" />
-              <textarea
-                value={b}
-                onChange={e => updateBullet(idx)(e.target.value)}
-                rows={2}
-                className="flex-1 px-2.5 py-1.5 text-sm border border-gray-200 rounded-lg
-                           focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-blue-400
-                           bg-white resize-none"
-                placeholder="技术方案描述或量化成果"
-              />
-              <button
-                onClick={() => removeBullet(idx)}
-                className="mt-1.5 p-1 text-gray-300 hover:text-red-400 hover:bg-red-50 rounded transition-colors"
-              >
-                <Trash2 size={13} />
-              </button>
-            </div>
-          ))}
-        </div>
-        <AddBtn onClick={addBullet} label="添加亮点" />
+        <DraggableBulletList
+          bullets={proj.bullets}
+          onReorder={(newBullets) => onChange({ ...proj, bullets: newBullets })}
+          onUpdate={(idx, val) => updateBullet(idx)(val)}
+          onRemove={removeBullet}
+          onAdd={addBullet}
+          addLabel="添加亮点"
+          dotColor="bg-purple-400"
+        />
       </div>
     </div>
   )
