@@ -1,26 +1,29 @@
 import { Mail, Phone, MapPin, Briefcase, GraduationCap, Code2, FolderOpen } from 'lucide-react'
 
 // ── 小组件 ──────────────────────────────────────────────────────────────────────
-function SectionHeader({ icon: Icon, children, accentColor, borderColor }) {
+function SectionHeader({ icon: Icon, children, accentColor, borderColor, s }) {
   return (
     <div
-      className="flex items-center gap-1 mb-2 pb-1"
-      style={{ borderBottom: `1px solid ${borderColor}` }}
+      className="flex items-center"
+      style={{ gap: s(4), marginBottom: s(8), paddingBottom: s(4), borderBottom: `1px solid ${borderColor}` }}
     >
-      <Icon size={11} style={{ color: accentColor }} className="flex-shrink-0" />
-      <h2 className="text-[11px] font-bold tracking-wide" style={{ color: accentColor }}>
+      <Icon size={s(11)} style={{ color: accentColor }} className="flex-shrink-0" />
+      <h2 className="font-bold tracking-wide" style={{ fontSize: s(11), color: accentColor }}>
         {children}
       </h2>
     </div>
   )
 }
 
-function Bullet({ children, bulletColor }) {
+function Bullet({ children, bulletColor, s }) {
   return (
-    <li className="text-[9px] text-gray-700 pl-3 relative leading-[1.45]">
+    <li
+      className="text-gray-700 relative"
+      style={{ fontSize: s(9), paddingLeft: s(12), lineHeight: 1.45 }}
+    >
       <span
-        className="absolute left-0 top-[4px] w-1.5 h-1.5 rounded-full flex-shrink-0"
-        style={{ background: bulletColor }}
+        className="absolute rounded-full flex-shrink-0"
+        style={{ left: 0, top: s(4), width: s(6), height: s(6), background: bulletColor }}
       />
       {children}
     </li>
@@ -28,49 +31,73 @@ function Bullet({ children, bulletColor }) {
 }
 
 // ── A4 简历预览组件（纯展示，不含任何状态） ──────────────────────────────────────
-export default function Resume({ data, theme }) {
+//
+// printMode = true 时，所有尺寸 × 794/595 ≈ 1.3344，
+// 输出 794×1123 px，恰好填满 A4（96dpi），不依赖任何 CSS transform / zoom。
+// 图片以目标分辨率原生渲染，彻底避免缩放导致的打印失真。
+//
+export default function Resume({ data, theme, printMode = false }) {
+  const f = printMode ? (794 / 595) : 1
+  const s = (v) => v * f
+
   return (
     <div
-      className="font-sans leading-normal overflow-hidden flex shadow-2xl rounded-lg"
-      style={{ width: 595, height: 842, background: theme.pageBg, flexShrink: 0 }}
+      className="font-sans leading-normal overflow-hidden flex"
+      style={{
+        width: s(595), height: s(842),
+        background: theme.pageBg, flexShrink: 0,
+        borderRadius: printMode ? 0 : 8,
+        boxShadow: printMode ? 'none' : '0 25px 50px -12px rgba(0,0,0,0.25)',
+      }}
     >
       {/* ══════════ 左侧栏 ══════════ */}
       <div
-        className="flex flex-col p-3 gap-2.5 flex-shrink-0"
-        style={{ width: 192, background: theme.sidebarBg }}
+        className="flex flex-col flex-shrink-0"
+        style={{ width: s(192), background: theme.sidebarBg, padding: s(12), gap: s(10) }}
       >
         {/* 个人名片 */}
         <div
-          className="rounded-xl p-3 shadow-lg text-white"
-          style={{ background: theme.cardBg }}
+          className="text-white"
+          style={{ borderRadius: s(12), padding: s(12), background: theme.cardBg, boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
         >
           {data.avatar
             ? <img src={data.avatar} alt="头像"
-                className="w-12 h-12 mx-auto mb-2" />
-            : <div className="w-12 h-12 mx-auto mb-2 rounded-full bg-white/25 border-2 border-white/50 shadow-inner flex items-center justify-center text-white/40 text-xl">
+                style={{ width: s(48), height: s(48), display: 'block', margin: `0 auto ${s(8)}px` }} />
+            : <div
+                className="flex items-center justify-center"
+                style={{
+                  width: s(48), height: s(48), margin: `0 auto ${s(8)}px`,
+                  borderRadius: s(9999), background: 'rgba(255,255,255,0.25)',
+                  border: `${s(2)}px solid rgba(255,255,255,0.5)`,
+                  color: 'rgba(255,255,255,0.4)', fontSize: s(20),
+                }}
+              >
                 👤
               </div>
           }
-          <h1 className="text-[16px] font-bold text-center tracking-widest mb-0.5">
+          <h1
+            className="font-bold text-center"
+            style={{ fontSize: s(16), letterSpacing: '0.1em', marginBottom: s(2) }}
+          >
             {data.name}
           </h1>
           <p
-            className="text-[9px] text-center mb-2.5 leading-tight"
-            style={{ color: 'rgba(255,255,255,0.85)' }}
+            className="text-center"
+            style={{ fontSize: s(9), color: 'rgba(255,255,255,0.85)', marginBottom: s(10), lineHeight: 1.25 }}
           >
             {data.title}
           </p>
-          <div className="space-y-1">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: s(4) }}>
             {[
               { Icon: Phone,  val: data.contact.phone },
               { Icon: Mail,   val: data.contact.email },
               { Icon: MapPin, val: data.contact.location },
             ].map(({ Icon, val }, i) => (
-              <div key={i} className="flex items-start gap-1">
-                <Icon size={8} className="mt-0.5 flex-shrink-0" style={{ color: theme.sidebarAccent }} />
+              <div key={i} className="flex items-start" style={{ gap: s(4) }}>
+                <Icon size={s(8)} className="flex-shrink-0" style={{ marginTop: s(2), color: theme.sidebarAccent }} />
                 <span
-                  className="text-[8.5px] break-all leading-tight"
-                  style={{ color: theme.sidebarText }}
+                  className="break-all"
+                  style={{ fontSize: s(8.5), color: theme.sidebarText, lineHeight: 1.25 }}
                 >
                   {val}
                 </span>
@@ -80,38 +107,35 @@ export default function Resume({ data, theme }) {
         </div>
 
         {/* 求职意向 */}
-        <div className="rounded-xl p-2.5 bg-white/5 border border-white/10">
-          <p className="text-[9px] font-semibold mb-1" style={{ color: theme.sidebarAccent }}>
+        <div style={{ borderRadius: s(12), padding: s(10), background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
+          <p className="font-semibold" style={{ fontSize: s(9), marginBottom: s(4), color: theme.sidebarAccent }}>
             求职意向
           </p>
-          <p className="text-[9px]" style={{ color: theme.sidebarText }}>
-            {data.intention.role}
-          </p>
-          <p className="text-[9px]" style={{ color: theme.sidebarSub }}>
-            意向城市：{data.intention.city}
-          </p>
+          <p style={{ fontSize: s(9), color: theme.sidebarText }}>{data.intention.role}</p>
+          <p style={{ fontSize: s(9), color: theme.sidebarSub }}>意向城市：{data.intention.city}</p>
         </div>
 
         {/* 核心技术栈 */}
-        <div className="rounded-xl p-2.5 bg-white/5 border border-white/10 flex-1">
-          <div className="flex items-center gap-1 mb-2">
-            <Code2 size={9} style={{ color: theme.sidebarAccent }} />
-            <p className="text-[9px] font-semibold" style={{ color: theme.sidebarAccent }}>
+        <div className="flex-1" style={{ borderRadius: s(12), padding: s(10), background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
+          <div className="flex items-center" style={{ gap: s(4), marginBottom: s(8) }}>
+            <Code2 size={s(9)} style={{ color: theme.sidebarAccent }} />
+            <p className="font-semibold" style={{ fontSize: s(9), color: theme.sidebarAccent }}>
               核心技术栈
             </p>
           </div>
-          <div className="space-y-2">
-            {data.skills.map((s, i) => (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: s(8) }}>
+            {data.skills.map((sk, i) => (
               <div key={i}>
-                <p className="text-[8px] mb-1" style={{ color: theme.sidebarSub }}>
-                  {s.category}
-                </p>
-                <div className="flex flex-wrap gap-1">
-                  {s.items.map((item, j) => (
+                <p style={{ fontSize: s(8), marginBottom: s(4), color: theme.sidebarSub }}>{sk.category}</p>
+                <div className="flex flex-wrap" style={{ gap: s(4) }}>
+                  {sk.items.map((item, j) => (
                     <span
                       key={j}
-                      className="text-[8px] px-1.5 py-0.5 rounded-full bg-white/10 border border-white/15"
-                      style={{ color: theme.sidebarText }}
+                      style={{
+                        fontSize: s(8), padding: `${s(2)}px ${s(6)}px`,
+                        borderRadius: s(9999), background: 'rgba(255,255,255,0.1)',
+                        border: '1px solid rgba(255,255,255,0.15)', color: theme.sidebarText,
+                      }}
                     >
                       {item}
                     </span>
@@ -123,60 +147,66 @@ export default function Resume({ data, theme }) {
         </div>
 
         {/* 教育背景 */}
-        <div className="rounded-xl p-2.5 bg-white/5 border border-white/10">
-          <div className="flex items-center gap-1 mb-1.5">
-            <GraduationCap size={9} style={{ color: theme.sidebarAccent }} />
-            <p className="text-[9px] font-semibold" style={{ color: theme.sidebarAccent }}>
+        <div style={{ borderRadius: s(12), padding: s(10), background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
+          <div className="flex items-center" style={{ gap: s(4), marginBottom: s(6) }}>
+            <GraduationCap size={s(9)} style={{ color: theme.sidebarAccent }} />
+            <p className="font-semibold" style={{ fontSize: s(9), color: theme.sidebarAccent }}>
               教育背景
             </p>
           </div>
-          <p className="text-[9px] font-semibold text-white">{data.education.school}</p>
-          <p className="text-[9px]" style={{ color: theme.sidebarText }}>{data.education.degree}</p>
-          <p className="text-[9px]" style={{ color: theme.sidebarSub }}>{data.education.period}</p>
-          <p className="text-[9px] mt-0.5" style={{ color: theme.sidebarSub }}>{data.education.note}</p>
+          <p className="font-semibold text-white" style={{ fontSize: s(9) }}>{data.education.school}</p>
+          <p style={{ fontSize: s(9), color: theme.sidebarText }}>{data.education.degree}</p>
+          <p style={{ fontSize: s(9), color: theme.sidebarSub }}>{data.education.period}</p>
+          <p style={{ fontSize: s(9), marginTop: s(2), color: theme.sidebarSub }}>{data.education.note}</p>
         </div>
       </div>
 
       {/* ══════════ 右侧主区 ══════════ */}
-      <div className="flex-1 flex flex-col p-4 gap-2.5 bg-white/90 rounded-r-lg overflow-hidden">
+      <div
+        className="flex-1 flex flex-col overflow-hidden"
+        style={{
+          padding: s(16), gap: s(10),
+          background: 'rgba(255,255,255,0.9)',
+          borderRadius: printMode ? 0 : `0 ${8}px ${8}px 0`,
+        }}
+      >
         {/* 个人简介 */}
         <div
-          className="rounded-xl p-3 shadow-sm flex-shrink-0"
-          style={{ background: theme.accentBg }}
+          className="flex-shrink-0"
+          style={{ borderRadius: s(12), padding: s(12), background: theme.accentBg, boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}
         >
-          <SectionHeader icon={Briefcase} accentColor={theme.accentColor} borderColor={theme.borderColor}>
+          <SectionHeader icon={Briefcase} accentColor={theme.accentColor} borderColor={theme.borderColor} s={s}>
             个人简介
           </SectionHeader>
-          <p className="text-[10px] text-gray-700 leading-relaxed">{data.summary}</p>
+          <p className="text-gray-700" style={{ fontSize: s(10), lineHeight: 1.625 }}>{data.summary}</p>
         </div>
 
         {/* 工作经历 */}
         <div
-          className="rounded-xl p-3 shadow-sm flex-shrink-0"
-          style={{ background: theme.accentBg }}
+          className="flex-shrink-0"
+          style={{ borderRadius: s(12), padding: s(12), background: theme.accentBg, boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}
         >
-          <SectionHeader icon={Briefcase} accentColor={theme.accentColor} borderColor={theme.borderColor}>
+          <SectionHeader icon={Briefcase} accentColor={theme.accentColor} borderColor={theme.borderColor} s={s}>
             工作经历
           </SectionHeader>
-          <div className="space-y-2">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: s(8) }}>
             {data.experience.map((job, i) => (
               <div
                 key={i}
-                className={i < data.experience.length - 1 ? 'pb-2' : ''}
-                style={i < data.experience.length - 1 ? { borderBottom: `1px solid ${theme.borderColor}` } : {}}
+                style={i < data.experience.length - 1 ? { paddingBottom: s(8), borderBottom: `1px solid ${theme.borderColor}` } : {}}
               >
                 <div className="flex items-baseline justify-between">
-                  <h3 className="text-[10px] font-bold" style={{ color: theme.accentColor }}>
+                  <h3 className="font-bold" style={{ fontSize: s(10), color: theme.accentColor }}>
                     {job.title}
                   </h3>
-                  <span className="text-[8px] text-gray-400 flex-shrink-0 ml-1">{job.period}</span>
+                  <span className="text-gray-400 flex-shrink-0" style={{ fontSize: s(8), marginLeft: s(4) }}>{job.period}</span>
                 </div>
-                <p className="text-[9px] text-gray-500 mb-1">
+                <p className="text-gray-500" style={{ fontSize: s(9), marginBottom: s(4) }}>
                   {job.company} · {job.industry}
                 </p>
-                <ul className="space-y-0.5">
+                <ul style={{ display: 'flex', flexDirection: 'column', gap: s(2) }}>
                   {job.bullets.map((b, j) => (
-                    <Bullet key={j} bulletColor={theme.bulletColor}>{b}</Bullet>
+                    <Bullet key={j} bulletColor={theme.bulletColor} s={s}>{b}</Bullet>
                   ))}
                 </ul>
               </div>
@@ -186,29 +216,28 @@ export default function Resume({ data, theme }) {
 
         {/* 核心项目经历 */}
         <div
-          className="rounded-xl p-3 shadow-sm flex-1"
-          style={{ background: theme.accentBg }}
+          className="flex-1"
+          style={{ borderRadius: s(12), padding: s(12), background: theme.accentBg, boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}
         >
-          <SectionHeader icon={FolderOpen} accentColor={theme.accentColor} borderColor={theme.borderColor}>
+          <SectionHeader icon={FolderOpen} accentColor={theme.accentColor} borderColor={theme.borderColor} s={s}>
             核心项目经历
           </SectionHeader>
-          <div className="space-y-2">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: s(8) }}>
             {data.projects.map((proj, i) => (
               <div
                 key={i}
-                className={i < data.projects.length - 1 ? 'pb-2' : ''}
-                style={i < data.projects.length - 1 ? { borderBottom: `1px solid ${theme.borderColor}` } : {}}
+                style={i < data.projects.length - 1 ? { paddingBottom: s(8), borderBottom: `1px solid ${theme.borderColor}` } : {}}
               >
                 <div className="flex items-baseline justify-between">
-                  <h3 className="text-[10px] font-bold" style={{ color: theme.accentColor }}>
+                  <h3 className="font-bold" style={{ fontSize: s(10), color: theme.accentColor }}>
                     {proj.name}
                   </h3>
-                  <span className="text-[8px] text-gray-400 flex-shrink-0 ml-1">{proj.period}</span>
+                  <span className="text-gray-400 flex-shrink-0" style={{ fontSize: s(8), marginLeft: s(4) }}>{proj.period}</span>
                 </div>
-                <p className="text-[9px] text-gray-500 mb-1">{proj.role}</p>
-                <ul className="space-y-0.5">
+                <p className="text-gray-500" style={{ fontSize: s(9), marginBottom: s(4) }}>{proj.role}</p>
+                <ul style={{ display: 'flex', flexDirection: 'column', gap: s(2) }}>
                   {proj.bullets.map((b, j) => (
-                    <Bullet key={j} bulletColor={theme.bulletColor}>{b}</Bullet>
+                    <Bullet key={j} bulletColor={theme.bulletColor} s={s}>{b}</Bullet>
                   ))}
                 </ul>
               </div>
