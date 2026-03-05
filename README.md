@@ -4,6 +4,10 @@
 
 所有数据保存在浏览器 localStorage，**无需后端**，完全离线可用。
 
+> 灵感来源：[AI-Resume](https://github.com/langgptai/AI-Resume)
+
+![预览效果](docs/preview.png)
+
 ## 功能特性
 
 - **实时预览** — 左侧 A4 比例简历随编辑实时更新
